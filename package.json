@@ -1,0 +1,44 @@
+{
+  "name": "task-dashboard",
+  "description": "Browser-based dashboard for viewing statistics and information on past work and future work items.",
+  "version": "0.0.0",
+  "homepage": "",
+  "main": "src/",
+  "keywords": [
+    "feathers"
+  ],
+  "license": "MIT",
+  "repository": {},
+  "author": {},
+  "contributors": [],
+  "bugs": {},
+  "engines": {
+    "node": ">= 0.12.0"
+  },
+  "scripts": {
+    "test": "npm run jshint && npm run mocha",
+    "jshint": "jshint src/. test/. --config",
+    "start": "node src/",
+    "mocha": "mocha test/ --recursive"
+  },
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "compression": "^1.7.1",
+    "cors": "^2.8.4",
+    "feathers": "^2.2.3",
+    "feathers-configuration": "^0.3.3",
+    "feathers-errors": "^2.9.2",
+    "feathers-hooks": "^1.8.1",
+    "feathers-nedb": "^2.7.0",
+    "feathers-rest": "^1.8.1",
+    "feathers-socketio": "^1.6.0",
+    "nedb": "^1.8.0",
+    "serve-favicon": "^2.4.5",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "jshint": "^2.9.5",
+    "mocha": "^4.0.1",
+    "request": "^2.83.0"
+  }
+}

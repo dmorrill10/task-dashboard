@@ -59,9 +59,16 @@ describe('TimeInterval', function () {
       assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5 + 2);
     });
   });
-  describe('fromString', function () {
+  describe('fromIntervalString', function () {
     it('works without a date', function () {
-      var patient = TimeInterval.fromString('11:21pm to 2:26am');
+      var patient = TimeInterval.fromIntervalString('11:21pm to 2:26am');
+      assert.ok(patient.hasStartTime());
+      assert.equal(patient.startTime().toLocaleTimeString(), '11:21:00 p.m.');
+      assert.equal(patient.endTime().toLocaleTimeString(), '2:26:00 a.m.');
+      assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5);
+    });
+    it('works with a date', function () {
+      var patient = TimeInterval.fromIntervalString('11:21pm to 2:26am', 'Dec 17, 2017');
       assert.ok(patient.hasStartTime());
       assert.equal(patient.startTime().toLocaleTimeString(), '11:21:00 p.m.');
       assert.ok(Date.parse('Dec 17, 2017 at 23:21').equals(patient.startTime()));

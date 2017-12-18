@@ -2,7 +2,52 @@ var parseDuration = require('parse-duration');
 require('datejs');
 
 
+function toS(o) {
+  if (o === undefined) {
+    return '';
+  } else {
+    return o;
+  }
+}
+
+
 class TimeInterval {
+  static fromDurationString(durationString = '', startTime) {
+    var st;
+    if (startTime !== undefined) {
+      st = Date.parse(startTime);
+    }
+    return new this(parseDuration(durationString), st);
+  }
+
+  static isIntervalString(s) {
+    return this.pattern.exec(string) !== null;
+  }
+
+  static fromIntervalString(string, optionalStartDate) {
+    const result = this.pattern.exec(string);
+    if (result) {
+      var startDate = result[1];
+      if (startDate === undefined) {
+        startDate = optionalStartDate;
+      }
+      const parsedStartTime = Date.parse(`${toS(startDate)} ${result[2]}`);
+
+      var endDate = result[4];
+      if (endDate === undefined) {
+        endDate = parsedStartTime.toString('MMM d, yyyy');
+      }
+      const endTime = Date.parse(`${endDate} ${result[5]}`);
+
+      var duration = endTime - parsedStartTime;
+      if (duration < 0) {
+        duration += 24 * 60 * 60 * 1000;
+      }
+      return new this(duration, parsedStartTime);
+    }
+    return null;
+  }
+
   constructor(durationMs = 0, startTime) {
     this._durationMs = durationMs;
     this._startTime = startTime;
@@ -26,38 +71,6 @@ class TimeInterval {
     return this._endTime;
   }
 };
-TimeInterval.fromDurationString = function (durationString = '', startTime) {
-  var st;
-  if (startTime !== undefined) {
-    st = Date.parse(startTime);
-  }
-  return new TimeInterval(parseDuration(durationString), st);
-}
+TimeInterval.pattern = /^(.*\s)?(\d+:?\d*[ap]?\.?m?\.?)\s*(to|-)\s*(.*\s)?(\d+:?\d*[ap]?\.?m?\.?)$/i;
 
-function toS(o) {
-  if (o === undefined) {
-    return '';
-  } else {
-    return o;
-  }
-}
-TimeInterval.fromString = function (string, startTime) {
-  const timeIntervalPattern = /^(.*\s)?(\d+:?\d*[ap]?\.?m?\.?)\s*(to|-)\s*(.*\s)?(\d+:?\d*[ap]?\.?m?\.?)$/i;
-  const result = timeIntervalPattern.exec(string);
-  if (result) {
-    const parsedStartTime = Date.parse(`${toS(result[1])} ${toS(result[2])}`);
-    var endDate = result[4];
-    if (endDate === undefined) {
-      endDate = parsedStartTime.toString('MMM d, yyyy');
-    }
-    const endTime = Date.parse(`${endDate} ${toS(result[5])}`);
-    var duration = endTime - parsedStartTime;
-    if (duration < 0) {
-      duration += 24 * 60 * 60 * 1000;
-    }
-    return new TimeInterval(duration, parsedStartTime);
-  } else {
-    return TimeInterval.fromDurationString(string, startTime);
-  }
-}
 module.exports = TimeInterval;

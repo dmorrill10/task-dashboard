@@ -59,3 +59,8 @@ typings/
 
 lib/
 data/
+vendor/
+.bundle/
+.DS_Store
+tmp/
+/public/assets/

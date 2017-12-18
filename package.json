@@ -25,6 +25,7 @@
     "body-parser": "^1.18.2",
     "compression": "^1.7.1",
     "cors": "^2.8.4",
+    "datejs": "^1.0.0-rc3",
     "feathers": "^2.2.3",
     "feathers-configuration": "^0.3.3",
     "feathers-errors": "^2.9.2",
@@ -33,6 +34,7 @@
     "feathers-rest": "^1.8.1",
     "feathers-socketio": "^1.6.0",
     "nedb": "^1.8.0",
+    "parse-duration": "^0.1.1",
     "serve-favicon": "^2.4.5",
     "winston": "^2.4.0"
   },

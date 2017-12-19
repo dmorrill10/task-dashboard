@@ -21,7 +21,7 @@ class TimeInterval {
   }
 
   static isIntervalString(s) {
-    return this.pattern.exec(string) !== null;
+    return this.pattern.exec(s) !== null;
   }
 
   static fromIntervalString(string, optionalStartDate) {
@@ -63,6 +63,9 @@ class TimeInterval {
   }
   durationS() {
     return this._durationMs / 1.0e3;
+  }
+  durationH() {
+    return this.durationS() / (60.0 * 60.0);
   }
   startTime() {
     return this._startTime;

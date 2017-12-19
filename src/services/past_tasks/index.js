@@ -4,6 +4,7 @@ const path = require('path')
 const hooks = require('./hooks');
 const yaml = require('js-yaml');
 const fs = require('fs');
+require('datejs');
 
 
 function loadYmlFile(file_name) {
@@ -16,7 +17,11 @@ class Service {
   }
 
   find(params) {
-    return Promise.resolve(loadYmlFile(this.options.file));
+    return new Promise((resolve, reject) => {
+      var data = loadYmlFile(this.options.file);
+      data.sort((a, b) => Date.parse(a.date).compareTo(Date.parse(b.date)));
+      resolve(data);
+    });
   }
 
   get(id, params) {

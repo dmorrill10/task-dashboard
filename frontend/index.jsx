@@ -207,6 +207,35 @@ class Calendar extends React.Component {
 
 const Chart = require('chart.js');
 
+function createHoursBarChart(elementId, dataLabels, barHeights, dataSetLabel) {
+  const ctx = document.getElementById(elementId).getContext('2d');
+  return new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: dataLabels,
+      datasets: [{
+        label: dataSetLabel,
+        data: barHeights
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          scaleLabel: {
+            labelString: 'Hours',
+            display: true
+          }
+        }]
+      }
+    }
+  });
+}
+
 class TasksOverTime {
   constructor(tasksByWeekAndDay_) {
     this._tasksByWeekAndDay = tasksByWeekAndDay_;
@@ -227,34 +256,11 @@ class TasksOverTime {
       times.push(hours[label]);
     }
 
-    const ctx = document.getElementById('hours-by-subject').getContext('2d');
     if (this._chart !== undefined) {
       this._chart.destroy();
     }
     const date = Date.parse(week).moveToDayOfWeek(Date.parse(day).getDay()).toString('MMM d, yyyy');
-    this._chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: date,
-          data: times
-        }]
-      },
-      options: {
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true
-            },
-            scaleLabel: {
-              labelString: 'Hours',
-              display: true
-            }
-          }]
-        }
-      }
-    });
+    this._chart = createHoursBarChart('hours-by-subject', labels, times, date);
   }
 
   showSubjectHoursTotal(weekString) {
@@ -275,34 +281,10 @@ class TasksOverTime {
     for (const label of labels) {
       times.push(hours[label]);
     }
-
-    const ctx = document.getElementById('hours-by-subject').getContext('2d');
     if (this._chart !== undefined) {
       this._chart.destroy();
     }
-    this._chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: `Week of ${weekString}`,
-          data: times
-        }]
-      },
-      options: {
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true
-            },
-            scaleLabel: {
-              labelString: 'Hours',
-              display: true
-            }
-          }]
-        }
-      }
-    });
+    this._chart = createHoursBarChart('hours-by-subject', labels, times, `Week of ${weekString}`);
   }
 
   showSubjectHoursAvg(earliestWeekString, latestWeekString) {
@@ -330,34 +312,10 @@ class TasksOverTime {
     for (const label of labels) {
       times.push(hours[label] / numWeeks);
     }
-
-    const ctx = document.getElementById('hours-by-subject').getContext('2d');
     if (this._chart !== undefined) {
       this._chart.destroy();
     }
-    this._chart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: `Avg. to ${latestWeekString}`,
-          data: times
-        }]
-      },
-      options: {
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true
-            },
-            scaleLabel: {
-              labelString: 'Hours',
-              display: true
-            }
-          }]
-        }
-      }
-    });
+    this._chart = createHoursBarChart('hours-by-subject', labels, times, `Avg. to ${latestWeekString}`);
   }
 }
 

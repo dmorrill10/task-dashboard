@@ -122,6 +122,7 @@ class Calendar extends React.Component {
     let foundFirstWeek = false;
     let weekTotals = [];
     let rows = [];
+    let weekStartDates = [];
     while (true) {
       const weekStartDateString = weekStartDate.toString('MMM d, yyyy');
       if (weekStartDateString in this.props.tasks) {
@@ -135,7 +136,7 @@ class Calendar extends React.Component {
           row.push(
             <td key={`${day}-${rows.length}`} className={day}>
               <a onClick={function () {
-                return showSubjectHours(weekStartDateString, day);
+                return window.tasksOverTime.showSubjectHours(weekStartDateString, day);
               }}>
                 {Math.round(100 * time) / 100.0}
               </a>
@@ -143,18 +144,38 @@ class Calendar extends React.Component {
           );
         }
         weekTotals.push(weekTotal);
-        row.push(<td key={`total-${rows.length}`} className={`total-${rows.length}`}>{Math.round(100 * weekTotal) / 100.0}</td>);
+        row.push(
+          <td key={`total-${rows.length}`} className={`total-${rows.length}`}>
+            <a onClick={function () {
+              return window.tasksOverTime.showSubjectHoursTotal(weekStartDateString);
+            }}>
+              {Math.round(100 * weekTotal) / 100.0}
+            </a>
+          </td>
+        );
         rows.push(row);
       } else if (foundFirstWeek) {
         break;
       }
+      weekStartDates.push(weekStartDateString);
       weekStartDate = weekStartDate.last().sunday();
     }
     let avg = 0.0;
     for (let i = rows.length - 1; i >= 0; --i) {
       const numWeeks = rows.length - i - 1;
       avg = (avg * numWeeks + weekTotals[i]) / (numWeeks + 1.0);
-      rows[i].push(<td key={`avg-${i}`} className={`avg-${i}`}>{Math.round(100 * avg) / 100.0}</td>);
+      rows[i].push(
+        <td key={`avg-${i}`} className={`avg-${i}`}>
+          <a onClick={function () {
+            return window.tasksOverTime.showSubjectHoursAvg(
+              weekStartDates[rows.length - 1],
+              weekStartDates[i]
+            );
+          }}>
+            {Math.round(100 * avg) / 100.0}
+          </a>
+        </td>
+      );
     }
     let l = [];
     for (let i = 0; i < rows.length; ++i) {
@@ -185,58 +206,166 @@ class Calendar extends React.Component {
 }
 
 const Chart = require('chart.js');
-window.Chart = Chart;
 
-function showSubjectHours(week, day) {
-  const myTasks = window.tasksByWeek[week][day];
-  let hours = {};
-  for (const task of myTasks) {
-    if (!(task.subject in hours)) {
-      hours[task.subject] = 0.0;
+class TasksOverTime {
+  constructor(tasksByWeekAndDay_) {
+    this._tasksByWeekAndDay = tasksByWeekAndDay_;
+    this._chart = undefined;
+  }
+  showSubjectHours(week, day) {
+    const myTasks = this._tasksByWeekAndDay[week][day];
+    let hours = {};
+    for (const task of myTasks) {
+      if (!(task.subject in hours)) {
+        hours[task.subject] = 0.0;
+      }
+      hours[task.subject] += task.duration.durationH();
     }
-    hours[task.subject] += task.duration.durationH();
-  }
-  const labels = Object.keys(hours);
-  let times = []
-  for (const label of labels) {
-    times.push(hours[label]);
+    const labels = Object.keys(hours);
+    let times = []
+    for (const label of labels) {
+      times.push(hours[label]);
+    }
+
+    const ctx = document.getElementById('hours-by-subject').getContext('2d');
+    if (this._chart !== undefined) {
+      this._chart.destroy();
+    }
+    const date = Date.parse(week).moveToDayOfWeek(Date.parse(day).getDay()).toString('MMM d, yyyy');
+    this._chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: date,
+          data: times
+        }]
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            },
+            scaleLabel: {
+              labelString: 'Hours',
+              display: true
+            }
+          }]
+        }
+      }
+    });
   }
 
-  const ctx = document.getElementById('hours-by-subject').getContext('2d');
-  if (window.myChart !== undefined) {
-    window.myChart.destroy();
-  }
-  const date = Date.parse(week).moveToDayOfWeek(Date.parse(day).getDay()).toString('MMM d, yyyy');
-  window.myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: date,
-        data: times
-      }]
-    },
-    options: {
-      scales: {
-        yAxes: [{
-          ticks: {
-            beginAtZero: true
-          },
-          scaleLabel: {
-            labelString: 'Hours',
-            display: true
-          }
-        }]
+  showSubjectHoursTotal(weekString) {
+    const week = Date.parse(weekString);
+
+    let hours = {};
+    for (const day of Date.CultureInfo.abbreviatedDayNames) {
+      const myTasks = this._tasksByWeekAndDay[weekString][day];
+      for (const task of myTasks) {
+        if (!(task.subject in hours)) {
+          hours[task.subject] = 0.0;
+        }
+        hours[task.subject] += task.duration.durationH();
       }
     }
-  });
+    const labels = Object.keys(hours);
+    let times = []
+    for (const label of labels) {
+      times.push(hours[label]);
+    }
+
+    const ctx = document.getElementById('hours-by-subject').getContext('2d');
+    if (this._chart !== undefined) {
+      this._chart.destroy();
+    }
+    this._chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: `Week of ${weekString}`,
+          data: times
+        }]
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            },
+            scaleLabel: {
+              labelString: 'Hours',
+              display: true
+            }
+          }]
+        }
+      }
+    });
+  }
+
+  showSubjectHoursAvg(earliestWeekString, latestWeekString) {
+    let week = Date.parse(earliestWeekString);
+    const latestWeek = Date.parse(latestWeekString);
+
+    let hours = {};
+    let numWeeks = 0;
+    while (week <= latestWeek) {
+      const weekString = week.toString('MMM d, yyyy');
+      for (const day of Date.CultureInfo.abbreviatedDayNames) {
+        const myTasks = this._tasksByWeekAndDay[weekString][day];
+        for (const task of myTasks) {
+          if (!(task.subject in hours)) {
+            hours[task.subject] = 0.0;
+          }
+          hours[task.subject] += task.duration.durationH();
+        }
+      }
+      numWeeks += 1;
+      week = week.next().sunday();
+    }
+    const labels = Object.keys(hours);
+    let times = []
+    for (const label of labels) {
+      times.push(hours[label] / numWeeks);
+    }
+
+    const ctx = document.getElementById('hours-by-subject').getContext('2d');
+    if (this._chart !== undefined) {
+      this._chart.destroy();
+    }
+    this._chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: `Avg. to ${latestWeekString}`,
+          data: times
+        }]
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            },
+            scaleLabel: {
+              labelString: 'Hours',
+              display: true
+            }
+          }]
+        }
+      }
+    });
+  }
 }
 
 function main() {
   return communicator.findPastTasks().then(function (data) {
     const tasks = constructTasks(data);
     const tasksByWeek = tasksByWeekAndDay(tasks);
-    window.tasksByWeek = tasksByWeek;
+    window.tasksOverTime = new TasksOverTime(tasksByWeek);
 
     return ReactDOM.render(
       <Calendar tasks={tasksByWeek} />,

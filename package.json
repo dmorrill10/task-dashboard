@@ -32,6 +32,7 @@
     "body-parser": "^1.18.2",
     "bootstrap-sass": "^3.3.7",
     "bourbon": "^4.3.4",
+    "chart.js": "^2.7.1",
     "compression": "^1.7.1",
     "cors": "^2.8.4",
     "css-loader": "^0.28.7",

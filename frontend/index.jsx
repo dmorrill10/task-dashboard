@@ -176,35 +176,56 @@ class Calendar extends React.Component {
   }
 }
 
+const Chart = require('chart.js');
+window.Chart = Chart;
+
+
 function main() {
   return communicator.findPastTasks().then(function (data) {
     const tasks = constructTasks(data);
+    const tasksByWeek = tasksByWeekAndDay(tasks);
 
-    // var weekSummaries = {};
-    // var weekEnd = Date.today();
-    // var weekStart = weekEnd.clone().last().sunday();
-    // var week = 0;
-    // weekSummaries[weekStart.toString('MMM d, yy')] = {weeksAgo: week};
-    // var thisWeeksTasks = [];
-    // for (const task of tasks) {
-    //   if (task.duration.startTime() < weekStart) {
-    //     weekSummaries[weekStart.toString('MMM d, yy')]['hours'] = durationHBySubject(thisWeeksTasks);
-    //     weekSummaries[weekStart.toString('MMM d, yy')]['descriptions'] = descriptionsBySubject(thisWeeksTasks);
-    //     thisWeeksTasks = [];
-    //     weekEnd = weekStart;
-    //     weekStart = weekStart.clone().last().sunday();
-    //     week += 1;
-    //     weekSummaries[weekStart.toString('MMM d, yy')] = {weeksAgo: week};
-    //   }
-    //   if (task.duration.startTime() >= weekStart && task.duration.startTime() < weekEnd) {
-    //     thisWeeksTasks.push(task);
-    //   }
-    // }
-    // weekSummaries[weekStart.toString('MMM d, yy')]['hours'] = durationHBySubject(thisWeeksTasks);
-    // weekSummaries[weekStart.toString('MMM d, yy')]['descriptions'] = descriptionsBySubject(thisWeeksTasks);
-    // thisWeeksTasks = [];
+    const myTasks = tasksByWeek['Dec 10, 2017']['Mon'];
+    let hours = {};
+    for (const task of myTasks) {
+      if (!(task.subject in hours)) {
+        hours[task.subject] = 0.0;
+      }
+      hours[task.subject] += task.duration.durationH();
+    }
+    const labels = Object.keys(hours);
+    let times = []
+    for (const label of labels) {
+      times.push(hours[label]);
+    }
+
+    const ctx = document.getElementById('hours-by-subject').getContext('2d');
+    const myChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Dec 11, 2017',
+          data: times
+        }]
+      },
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: {
+              beginAtZero: true
+            },
+            scaleLabel: {
+              labelString: 'Hours',
+              display: true
+            }
+          }]
+        }
+      }
+    });
+
     return ReactDOM.render(
-      <Calendar tasks={tasksByWeekAndDay(tasks)} />,
+      <Calendar tasks={tasksByWeek} />,
       document.getElementById('calendar')
     );
   });

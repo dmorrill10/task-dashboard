@@ -132,7 +132,15 @@ class Calendar extends React.Component {
         for (const day of Date.CultureInfo.abbreviatedDayNames) {
           const time = days[day].reduce((sum, task) => sum + task.duration.durationH(), 0.0);
           weekTotal += time;
-          row.push(<td key={`${day}-${rows.length}`} className={day}>{Math.round(100 * time) / 100.0}</td>);
+          row.push(
+            <td key={`${day}-${rows.length}`} className={day}>
+              <a onClick={function () {
+                return showSubjectHours(weekStartDateString, day);
+              }}>
+                {Math.round(100 * time) / 100.0}
+              </a>
+            </td>
+          );
         }
         weekTotals.push(weekTotal);
         row.push(<td key={`total-${rows.length}`} className={`total-${rows.length}`}>{Math.round(100 * weekTotal) / 100.0}</td>);
@@ -179,50 +187,56 @@ class Calendar extends React.Component {
 const Chart = require('chart.js');
 window.Chart = Chart;
 
+function showSubjectHours(week, day) {
+  const myTasks = window.tasksByWeek[week][day];
+  let hours = {};
+  for (const task of myTasks) {
+    if (!(task.subject in hours)) {
+      hours[task.subject] = 0.0;
+    }
+    hours[task.subject] += task.duration.durationH();
+  }
+  const labels = Object.keys(hours);
+  let times = []
+  for (const label of labels) {
+    times.push(hours[label]);
+  }
+
+  const ctx = document.getElementById('hours-by-subject').getContext('2d');
+  if (window.myChart !== undefined) {
+    window.myChart.destroy();
+  }
+  const date = Date.parse(week).moveToDayOfWeek(Date.parse(day).getDay()).toString('MMM d, yyyy');
+  window.myChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: date,
+        data: times
+      }]
+    },
+    options: {
+      scales: {
+        yAxes: [{
+          ticks: {
+            beginAtZero: true
+          },
+          scaleLabel: {
+            labelString: 'Hours',
+            display: true
+          }
+        }]
+      }
+    }
+  });
+}
 
 function main() {
   return communicator.findPastTasks().then(function (data) {
     const tasks = constructTasks(data);
     const tasksByWeek = tasksByWeekAndDay(tasks);
-
-    const myTasks = tasksByWeek['Dec 10, 2017']['Mon'];
-    let hours = {};
-    for (const task of myTasks) {
-      if (!(task.subject in hours)) {
-        hours[task.subject] = 0.0;
-      }
-      hours[task.subject] += task.duration.durationH();
-    }
-    const labels = Object.keys(hours);
-    let times = []
-    for (const label of labels) {
-      times.push(hours[label]);
-    }
-
-    const ctx = document.getElementById('hours-by-subject').getContext('2d');
-    const myChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Dec 11, 2017',
-          data: times
-        }]
-      },
-      options: {
-        scales: {
-          yAxes: [{
-            ticks: {
-              beginAtZero: true
-            },
-            scaleLabel: {
-              labelString: 'Hours',
-              display: true
-            }
-          }]
-        }
-      }
-    });
+    window.tasksByWeek = tasksByWeek;
 
     return ReactDOM.render(
       <Calendar tasks={tasksByWeek} />,

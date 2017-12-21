@@ -2,14 +2,8 @@
 
 const path = require('path');
 const hooks = require('./hooks');
-const yaml = require('js-yaml');
-const fs = require('fs');
-require('datejs');
+var Project = require('read-tasks/lib/project');
 
-
-function loadYmlFile(file_name) {
-  return yaml.safeLoad(fs.readFileSync(file_name, 'utf8'));
-}
 
 class Service {
   constructor(options) {
@@ -18,9 +12,9 @@ class Service {
 
   find(params) {
     return new Promise((resolve, reject) => {
-      var data = loadYmlFile(this.options.file);
-      data.sort((a, b) => Date.parse(a.date).compareTo(Date.parse(b.date)));
-      resolve(data);
+      const projects = Project.fromYmlFile(this.options.file);
+      const tasks = projects.flatOrderedByDeadlineAndUrgency();
+      return resolve(tasks.map(t => t.toData()));
     });
   }
 
@@ -33,18 +27,18 @@ module.exports = function () {
   const app = this;
 
   // Initialize our service with any options it requires
-  app.use('/past_tasks', new Service({
-    file: path.join(__dirname, '..', '..', '..', 'data', 'past_tasks.yml')
+  app.use('/upcoming_tasks', new Service({
+    file: path.join(__dirname, '..', '..', '..', 'data', 'upcoming_tasks.yml')
   }));
 
   // Get our initialize service to that we can bind hooks
-  const past_tasksService = app.service('/past_tasks');
+  const upcoming_tasksService = app.service('/upcoming_tasks');
 
   // Set up our before hooks
-  past_tasksService.before(hooks.before);
+  upcoming_tasksService.before(hooks.before);
 
   // Set up our after hooks
-  past_tasksService.after(hooks.after);
+  upcoming_tasksService.after(hooks.after);
 };
 
 module.exports.Service = Service;

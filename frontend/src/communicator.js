@@ -8,5 +8,11 @@ class Communicator {
   findPastTasks() {
     return this.pastTasksService().find();
   }
+  upcomingTasksService() {
+    return this.socket.service('upcoming_tasks');
+  }
+  findUpcomingTasks() {
+    return this.upcomingTasksService().find();
+  }
 }
 export default Communicator;

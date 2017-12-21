@@ -320,7 +320,7 @@ class TasksOverTime {
 }
 
 function main() {
-  return communicator.findPastTasks().then(function (data) {
+  communicator.findPastTasks().then(function (data) {
     const tasks = constructTasks(data);
     const tasksByWeek = tasksByWeekAndDay(tasks);
     window.tasksOverTime = new TasksOverTime(tasksByWeek);
@@ -329,6 +329,39 @@ function main() {
       <Calendar tasks={tasksByWeek} />,
       document.getElementById('calendar')
     );
+  });
+
+  communicator.findUpcomingTasks().then(function (data) {
+    const ctx = document.getElementById('upcoming-tasks').getContext('2d');
+    const today = Date.today().at('12am');
+    const maxDate = today.clone().next().week();
+
+    return new Chart(ctx, {
+      type: 'horizontalBar',
+      data: {
+        labels: data.map(task => task.name),
+        datasets: [{
+          label: 'Upcoming Tasks',
+          data: data.map(task => task.deadline === null ? maxDate.getTime() : Date.parse(task.deadline).getTime())
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            ticks: {
+              userCallback: function(epoch) {
+                return (new Date(epoch)).toString('MMM d');
+              },
+              min: today.getTime(),
+              max: maxDate.getTime(),
+              stepSize: 24 * 60 * 60 * 1000
+            }
+          }]
+        }
+      }
+    });
   });
 }
 

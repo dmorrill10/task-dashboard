@@ -96,7 +96,7 @@ const marked = require('marked');
 
 
 function tasksByWeekAndDay(tasks) {
-  let weeks = {}
+  let weeks = {};
   for (const task of tasks) {
     const lastSunday = task.duration.startTime().is().sunday() ? task.duration.startTime() : task.duration.startTime().clone().last().sunday();
     const lastSundayString = lastSunday.toString('MMM d, yyyy');
@@ -123,9 +123,11 @@ class Calendar extends React.Component {
     let weekTotals = [];
     let rows = [];
     let weekStartDates = [];
-    while (true) {
+    let i = 0;
+    while (i < window.tasksOverTime.numWeeks()) {
       const weekStartDateString = weekStartDate.toString('MMM d, yyyy');
       if (weekStartDateString in this.props.tasks) {
+        i += 1;
         foundFirstWeek = true;
         let weekTotal = 0.0;
         let row = [<td key={`week-${rows.length}`} className='week'>{weekStartDateString}</td>];
@@ -154,8 +156,6 @@ class Calendar extends React.Component {
           </td>
         );
         rows.push(row);
-      } else if (foundFirstWeek) {
-        break;
       }
       weekStartDates.push(weekStartDateString);
       weekStartDate = weekStartDate.last().sunday();
@@ -210,7 +210,7 @@ const Chart = require('chart.js');
 function createHoursBarChart(elementId, dataLabels, barHeights, dataSetLabel) {
   const ctx = document.getElementById(elementId).getContext('2d');
   return new Chart(ctx, {
-    type: 'bar',
+    type: 'horizontalBar',
     data: {
       labels: dataLabels,
       datasets: [{
@@ -241,6 +241,11 @@ class TasksOverTime {
     this._tasksByWeekAndDay = tasksByWeekAndDay_;
     this._chart = undefined;
   }
+
+  numWeeks() {
+    return Object.keys(this._tasksByWeekAndDay).length;
+  }
+
   showSubjectHours(week, day) {
     const myTasks = this._tasksByWeekAndDay[week][day];
     let hours = {};
@@ -295,13 +300,15 @@ class TasksOverTime {
     let numWeeks = 0;
     while (week <= latestWeek) {
       const weekString = week.toString('MMM d, yyyy');
-      for (const day of Date.CultureInfo.abbreviatedDayNames) {
-        const myTasks = this._tasksByWeekAndDay[weekString][day];
-        for (const task of myTasks) {
-          if (!(task.subject in hours)) {
-            hours[task.subject] = 0.0;
+      if (weekString in this._tasksByWeekAndDay) {
+        for (const day of Date.CultureInfo.abbreviatedDayNames) {
+          const myTasks = this._tasksByWeekAndDay[weekString][day];
+          for (const task of myTasks) {
+            if (!(task.subject in hours)) {
+              hours[task.subject] = 0.0;
+            }
+            hours[task.subject] += task.duration.durationH();
           }
-          hours[task.subject] += task.duration.durationH();
         }
       }
       numWeeks += 1;
@@ -315,7 +322,7 @@ class TasksOverTime {
     if (this._chart !== undefined) {
       this._chart.destroy();
     }
-    this._chart = createHoursBarChart('hours-by-subject', labels, times, `Avg. to ${latestWeekString}`);
+    this._chart = createHoursBarChart('hours-by-subject', labels, times, `Avg. from ${earliestWeekString} to ${latestWeekString} (${numWeeks} weeks)`);
   }
 }
 

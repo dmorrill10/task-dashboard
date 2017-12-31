@@ -92,7 +92,7 @@ function descriptionsBySubject(tasks) {
   return descriptions;
 }
 
-const marked = require('marked');
+// const marked = require('marked');
 
 
 function tasksByWeekAndDay(tasks) {
@@ -118,7 +118,8 @@ class Calendar extends React.Component {
       return null;
     }
 
-    let weekStartDate = Date.today().last().sunday();
+    const today = Date.today();
+    let weekStartDate = today.is().sunday() ? today : today.last().sunday();
     let foundFirstWeek = false;
     let weekTotals = [];
     let rows = [];

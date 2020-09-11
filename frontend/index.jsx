@@ -225,7 +225,8 @@ function createHoursBarChart(elementId, dataLabels, barHeights, dataSetLabel) {
       scales: {
         yAxes: [{
           ticks: {
-            beginAtZero: true
+            beginAtZero: true,
+            min: 0
           },
           scaleLabel: {
             labelString: 'Hours',

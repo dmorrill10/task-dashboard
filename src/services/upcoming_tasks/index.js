@@ -14,7 +14,7 @@ class Service {
     return new Promise((resolve, reject) => {
       const projects = Project.fromYmlFile(this.options.file);
       const tasks = projects.flatOrderedByDeadlineAndUrgency();
-      return resolve(tasks.map(t => t.toData()));
+      return resolve(tasks.filter(t => !t.done).map(t => t.toData()));
     });
   }
 

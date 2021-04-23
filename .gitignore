@@ -64,3 +64,5 @@ vendor/
 .DS_Store
 tmp/
 /public/assets/
+
+Makefile

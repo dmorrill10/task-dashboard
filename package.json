@@ -16,10 +16,9 @@
     "node": ">= 0.12.0"
   },
   "scripts": {
-    "test": "npm run test-s && npm run test-f",
-    "test-s": "jshint -- src/. test/. --config && mocha test/ --recursive",
-    "test-f": "jshint -- frontend/. --config && mocha frontend/test/ --recursive",
-    "lint": "jshint src/. test/. frontend/. --config",
+    "test": "npm run test-s",
+    "test-s": "jshint -- src/. test/. && mocha test/ --recursive",
+    "lint": "jshint src/. test/.",
     "start": "node src/",
     "build": "webpack --progress --colors",
     "watch": "webpack --progress --colors --watch"

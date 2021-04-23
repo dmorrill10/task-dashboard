@@ -32,13 +32,13 @@ module.exports = function () {
   }));
 
   // Get our initialize service to that we can bind hooks
-  const upcoming_tasksService = app.service('/upcoming_tasks');
+  const upcomingTasksService = app.service('/upcoming_tasks');
 
   // Set up our before hooks
-  upcoming_tasksService.before(hooks.before);
+  upcomingTasksService.before(hooks.before);
 
   // Set up our after hooks
-  upcoming_tasksService.after(hooks.after);
+  upcomingTasksService.after(hooks.after);
 };
 
 module.exports.Service = Service;

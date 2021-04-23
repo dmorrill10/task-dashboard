@@ -7,8 +7,8 @@ const fs = require('fs');
 require('datejs');
 
 
-function loadYmlFile(file_name) {
-  return yaml.safeLoad(fs.readFileSync(file_name, 'utf8'));
+function loadYmlFile(fileName) {
+  return yaml.safeLoad(fs.readFileSync(fileName, 'utf8'));
 }
 
 class Service {
@@ -39,13 +39,13 @@ module.exports = function () {
   }));
 
   // Get our initialize service to that we can bind hooks
-  const past_tasksService = app.service('/past_tasks');
+  const pastTasksService = app.service('/past_tasks');
 
   // Set up our before hooks
-  past_tasksService.before(hooks.before);
+  pastTasksService.before(hooks.before);
 
   // Set up our after hooks
-  past_tasksService.after(hooks.after);
+  pastTasksService.after(hooks.after);
 };
 
 module.exports.Service = Service;

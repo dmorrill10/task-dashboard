@@ -40,9 +40,9 @@ describe('TimeInterval', function () {
         '1:21pm'
       );
       assert.ok(patient.hasStartTime());
-      assert.equal(patient.startTime().toLocaleTimeString(), '1:21:00 p.m.');
+      assert.equal('1:21:00 PM', patient.startTime().toLocaleTimeString());
       assert.ok(Date.parse('13:21').equals(patient.startTime()));
-      assert.equal(patient.endTime().toLocaleTimeString(), '4:26:02 p.m.');
+      assert.equal('4:26:02 PM', patient.endTime().toLocaleTimeString());
       assert.ok(Date.parse('16:26:02').equals(patient.endTime()));
       assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5 + 2);
     });
@@ -52,9 +52,9 @@ describe('TimeInterval', function () {
         'Dec 17, 2017 11:21pm'
       );
       assert.ok(patient.hasStartTime());
-      assert.equal(patient.startTime().toLocaleTimeString(), '11:21:00 p.m.');
+      assert.equal('11:21:00 PM', patient.startTime().toLocaleTimeString());
       assert.ok(Date.parse('Dec 17, 2017 at 23:21').equals(patient.startTime()));
-      assert.equal(patient.endTime().toLocaleTimeString(), '2:26:02 a.m.');
+      assert.equal('2:26:02 AM', patient.endTime().toLocaleTimeString());
       assert.ok(Date.parse('Dec 18, 2017 at 2:26:02').equals(patient.endTime()));
       assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5 + 2);
     });
@@ -63,16 +63,16 @@ describe('TimeInterval', function () {
     it('works without a date', function () {
       var patient = TimeInterval.fromIntervalString('11:21pm to 2:26am');
       assert.ok(patient.hasStartTime());
-      assert.equal(patient.startTime().toLocaleTimeString(), '11:21:00 p.m.');
-      assert.equal(patient.endTime().toLocaleTimeString(), '2:26:00 a.m.');
+      assert.equal('11:21:00 PM', patient.startTime().toLocaleTimeString());
+      assert.equal('2:26:00 AM', patient.endTime().toLocaleTimeString());
       assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5);
     });
     it('works with a date', function () {
       var patient = TimeInterval.fromIntervalString('11:21pm to 2:26am', 'Dec 17, 2017');
       assert.ok(patient.hasStartTime());
-      assert.equal(patient.startTime().toLocaleTimeString(), '11:21:00 p.m.');
+      assert.equal('11:21:00 PM', patient.startTime().toLocaleTimeString());
       assert.ok(Date.parse('Dec 17, 2017 at 23:21').equals(patient.startTime()));
-      assert.equal(patient.endTime().toLocaleTimeString(), '2:26:00 a.m.');
+      assert.equal('2:26:00 AM', patient.endTime().toLocaleTimeString());
       assert.ok(Date.parse('Dec 18, 2017 at 02:26').equals(patient.endTime()));
       assert.equal(patient.durationS(), 60 * 60 * 3 + 60 * 5);
     });

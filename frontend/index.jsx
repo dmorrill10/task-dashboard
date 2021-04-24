@@ -15,24 +15,16 @@ import Communicator from './src/communicator';
 
 function afterRender(selector, f) {
   const elem = $(selector);
-  if (elem && elem.length) {
-    return f();
-  } else {
-    return window.requestAnimationFrame(() => {
-      return afterRender(selector, f);
-    });
-  }
+  const elemHasRendered = elem && elem.length;
+  return elemHasRendered ? f() : window.requestAnimationFrame(
+    () => { return afterRender(selector, f); });
 }
 
 function afterHasSize(selector, f) {
   const elem = $(selector);
-  if (elem && elem.length && elem.height() > 0.0 && elem.width() > 0.0) {
-    return f();
-  } else {
-    return window.requestAnimationFrame(() => {
-      return afterHasSize(selector, f);
-    });
-  }
+  const elemHasSize = elem && elem.length && elem.height() > 0.0 && elem.width() > 0.0;
+  return elemHasSize ? f() : window.requestAnimationFrame(
+    () => { return afterHasSize(selector, f); })
 }
 
 const hooks = require('feathers-hooks');
@@ -45,18 +37,15 @@ let communicator = new Communicator(app);
 
 function constructTasks(data) {
   var tasks = [];
-  var endTime;
   for (const day of data) {
-    endTime = day.date;
     for (const task of day.tasks) {
-      var duration;
-      if (TimeInterval.isIntervalString(task.duration)) {
-        duration = TimeInterval.fromIntervalString(task.duration, day.date);
-      } else {
-        duration = TimeInterval.fromDurationString(task.duration, endTime);
+      const duration = TimeInterval.isIntervalString(task.duration) ?
+        TimeInterval.fromIntervalString(task.duration, day.date) :
+        TimeInterval.fromDurationString(task.duration, day.date);
+      if (duration > 10) {
+        console.warn("Duration ${duration} > 10 hours on ${day.date}. Is this a mistake in the data file?");
       }
-      endTime = duration.endTime();
-      tasks.push({duration: duration, subject: task.subject, description: task.description});
+      tasks.push({ duration: duration, subject: task.subject, description: task.description });
     }
   }
   tasks.reverse();
@@ -111,8 +100,53 @@ function tasksByWeekAndDay(tasks) {
   return weeks;
 }
 
+function roundToOneHundredth(v) {
+  return Math.round(100 * v) / 100.0;
+}
+
+function trListFromRows(rows) {
+  let l = [];
+  for (let i = 0; i < rows.length; ++i) {
+    l.push(<tr key={l.length}>{rows[i]}</tr>);
+  }
+  return l;
+}
+
+function numWorkDays(dayHours) {
+  return dayHours.reduce((sum, h) => sum + (h > 1), 0);
+}
+
+function totalHours(dayHours) {
+  return dayHours.reduce((sum, h) => sum + h, 0);
+}
+
+function hoursInWeekTableRow(weekNumber, weekStartDateString, dayHours) {
+  let row = [<td key={`week-${weekNumber}`} className='week'>{weekStartDateString}</td>];
+  for (let i = 0; i < dayHours.length; ++i) {
+    const h = dayHours[i];
+    const day = Date.CultureInfo.abbreviatedDayNames[i];
+    row.push(
+      <td key={`${day}-${weekNumber}`} className={day}>
+        <a onClick={function () {
+          return window.tasksOverTime.showSubjectHours(weekStartDateString, day);
+        }}>
+          {roundToOneHundredth(h)}
+        </a>
+      </td>
+    );
+  }
+  return row;
+}
 
 class Calendar extends React.Component {
+  hoursOnEachDay(weekStartDateString) {
+    const days = this.props.tasks[weekStartDateString];
+    let dayHours = [];
+    for (const day of Date.CultureInfo.abbreviatedDayNames) {
+      dayHours.push(days[day].reduce((sum, task) => sum + task.duration.durationH(), 0.0));
+    }
+    return dayHours;
+  }
   dayRows() {
     if (Object.keys(this.props.tasks).length < 1) {
       return null;
@@ -125,46 +159,56 @@ class Calendar extends React.Component {
     let rows = [];
     let weekStartDates = [];
     let i = 0;
+    let myNumWorkDays = [];
     while (i < window.tasksOverTime.numWeeks()) {
       const weekStartDateString = weekStartDate.toString('MMM d, yyyy');
+      weekStartDates.push(weekStartDateString);
       if (weekStartDateString in this.props.tasks) {
         i += 1;
         foundFirstWeek = true;
-        let weekTotal = 0.0;
-        let row = [<td key={`week-${rows.length}`} className='week'>{weekStartDateString}</td>];
-        const days = this.props.tasks[weekStartDateString];
-        for (const day of Date.CultureInfo.abbreviatedDayNames) {
-          const time = days[day].reduce((sum, task) => sum + task.duration.durationH(), 0.0);
-          weekTotal += time;
-          row.push(
-            <td key={`${day}-${rows.length}`} className={day}>
-              <a onClick={function () {
-                return window.tasksOverTime.showSubjectHours(weekStartDateString, day);
-              }}>
-                {Math.round(100 * time) / 100.0}
-              </a>
-            </td>
-          );
-        }
+        const dayHours = this.hoursOnEachDay(weekStartDateString);
+        const weekTotal = totalHours(dayHours);
+        const row = hoursInWeekTableRow(rows.length, weekStartDateString, dayHours);
         weekTotals.push(weekTotal);
         row.push(
           <td key={`total-${rows.length}`} className={`total-${rows.length}`}>
             <a onClick={function () {
               return window.tasksOverTime.showSubjectHoursTotal(weekStartDateString);
             }}>
-              {Math.round(100 * weekTotal) / 100.0}
+              {roundToOneHundredth(weekTotal)}
+            </a>
+          </td>
+        );
+        const n = numWorkDays(dayHours);
+        myNumWorkDays.push(n);
+        row.push(
+          <td key={`num-work-days-${rows.length}`} className={`num-work-days-${rows.length}`}>
+            <a onClick={function () {
+              return window.tasksOverTime.showSubjectHoursTotal(weekStartDateString);
+            }}>{n}</a>
+          </td>
+        );
+        row.push(
+          <td key={`hours-per-work-day-${rows.length}`} className={`hours-per-work-day-${rows.length}`}>
+            <a onClick={function () {
+              return window.tasksOverTime.showSubjectHoursTotal(weekStartDateString);
+            }}>
+              {roundToOneHundredth(weekTotal / n)}
             </a>
           </td>
         );
         rows.push(row);
       }
-      weekStartDates.push(weekStartDateString);
       weekStartDate = weekStartDate.last().sunday();
     }
-    let avg = 0.0;
+    let myTotalHours = 0.0;
+    let numPastWorkDays = 0
+    // Rows are ordered from most (0) to least recent (rows.length - 1).
     for (let i = rows.length - 1; i >= 0; --i) {
-      const numWeeks = rows.length - i - 1;
-      avg = (avg * numWeeks + weekTotals[i]) / (numWeeks + 1.0);
+      const numWeeks = rows.length - i;
+      myTotalHours += weekTotals[i];
+
+      // Hours per week average column
       rows[i].push(
         <td key={`avg-${i}`} className={`avg-${i}`}>
           <a onClick={function () {
@@ -173,16 +217,25 @@ class Calendar extends React.Component {
               weekStartDates[i]
             );
           }}>
-            {Math.round(100 * avg) / 100.0}
+            {roundToOneHundredth(myTotalHours / numWeeks)}
           </a>
         </td>
       );
+
+      numPastWorkDays += myNumWorkDays[i];
+      rows[i].push(
+        <td key={`avg-num-work-days-${i}`} className={`avg-num-work-days-${i}`}>
+          {roundToOneHundredth(numPastWorkDays / numWeeks)}
+        </td>
+      );
+      // Hours per work day column
+      rows[i].push(
+        <td key={`avg-hours-per-work-day-${i}`} className={`avg-hours-per-work-day-${i}`}>
+          {roundToOneHundredth(myTotalHours / numPastWorkDays)}
+        </td>
+      );
     }
-    let l = [];
-    for (let i = 0; i < rows.length; ++i) {
-      l.push(<tr key={l.length}>{rows[i]}</tr>);
-    }
-    return l;
+    return trListFromRows(rows);
   }
   render() {
     const dayHeaders = Date.CultureInfo.abbreviatedDayNames.map(
@@ -192,10 +245,14 @@ class Calendar extends React.Component {
       <table className='table table-striped table-responsive'>
         <thead>
           <tr>
-            <th key='week-label' className='week-label'>Week</th>
+            <th key='week-label' className='week-label'>week</th>
             {dayHeaders}
-            <th key='total-label' className='total-label'>Total</th>
-            <th key='avg-label' className='avg-label'>Avg</th>
+            <th key='total-label' className='total-label'>total</th>
+            <th key='num-work-days-label' className='num-work-days-label'># wd(1)</th>
+            <th key='hours-per-work-day-label' className='hours-per-work-day-label'>h/wd(1)</th>
+            <th key='avg-label' className='avg-label'>avg.</th>
+            <th key='avg-num-work-days-label' className='avg-num-work-days-label'>avg. # wd(1)</th>
+            <th key='avg-hours-per-work-day-label' className='avg-hours-per-work-day-label'>avg. h/wd(1)</th>
           </tr>
         </thead>
         <tbody>
@@ -271,8 +328,6 @@ class TasksOverTime {
   }
 
   showSubjectHoursTotal(weekString) {
-    const week = Date.parse(weekString);
-
     let hours = {};
     for (const day of Date.CultureInfo.abbreviatedDayNames) {
       const myTasks = this._tasksByWeekAndDay[weekString][day];
@@ -360,7 +415,7 @@ function main() {
         scales: {
           xAxes: [{
             ticks: {
-              userCallback: function(epoch) {
+              userCallback: function (epoch) {
                 return (new Date(epoch)).toString('MMM d');
               },
               min: today.getTime(),

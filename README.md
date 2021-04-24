@@ -12,13 +12,13 @@ Getting up and running is as easy as 1, 2, 3.
 
 1. Make sure you have [NodeJS](https://nodejs.org/) and [npm](https://www.npmjs.com/) installed.
 2. Install your dependencies
-    
+
     ```
     cd path/to/task-dashboard; npm install
     ```
 
 3. Start your app
-    
+
     ```
     npm start
     ```
@@ -49,6 +49,10 @@ For more information on all the things you can do with Feathers visit [docs.feat
 __0.1.0__
 
 - Initial release
+
+## Development
+
+`yarn watch` to rebuild app as changes are made. In another tab, run `yarn start` to run the server.
 
 ## License
 

@@ -3,11 +3,7 @@ require('datejs');
 
 
 function toS(o) {
-  if (o === undefined) {
-    return '';
-  } else {
-    return o;
-  }
+  return o === undefined ? '' : o;
 }
 
 
@@ -53,8 +49,8 @@ class TimeInterval {
     this._startTime = startTime;
     this._endTime = (
       startTime === undefined || startTime === null ?
-      undefined :
-      startTime.clone().addMilliseconds(durationMs)
+        undefined :
+        startTime.clone().addMilliseconds(durationMs)
     );
   }
 
